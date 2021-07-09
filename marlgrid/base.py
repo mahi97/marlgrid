@@ -612,6 +612,20 @@ class MultiGridEnv(gym.Env):
                     else:
                         pass
 
+                # Press an object
+                elif action == agent.actions.press:
+                    if fwd_cell:
+                        wasted = bool(fwd_cell.toggle(agent, fwd_pos))
+                    else:
+                        pass
+
+                # Release an object
+                elif action == agent.actions.release:
+                    if fwd_cell:
+                        wasted = bool(fwd_cell.toggle(agent, fwd_pos))
+                    else:
+                        pass
+
                 # Done action (not used by default)
                 elif action == agent.actions.done:
                     pass
