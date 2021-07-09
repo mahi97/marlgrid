@@ -33,16 +33,12 @@ class DoorKeyEnv(MultiGridEnv):
         # Place a door in the wall
         # doorIdx = self._rand_int(1, width - 2)
         doorIdx = width // 2
-        d1 = Door(color="yellow", state=Door.states.locked)
-        self.put_obj(d1, splitIdx, doorIdx)
+        self.put_obj(Door(color="yellow", state=Door.states.locked), splitIdx, doorIdx)
 
         # Place a yellow key on the left side
         # self.place_obj(obj=Key("yellow"), top=(0, 0), size=(splitIdx, height))
-        s1 = Switch("yellow")
-        self.place_obj(obj=s1, top=(width // 4, height - 5), size=(3, 3))
         self.place_obj(obj=Key("yellow"), top=(width // 4, height - 5), size=(3, 3))
 
         self.agent_spawn_kwargs = {'top': (0, 0), 'size': (width // 2, height // 2)}
 
-        s1.signal.connect(d1.switch)
         # self.place_agents(**self.agent_spawn_kwargs)
