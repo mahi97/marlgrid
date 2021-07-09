@@ -9,7 +9,7 @@ from gym_minigrid.rendering import (
     point_in_line,
 )
 
-from PySignal import  Signal
+from PySignal import Signal
 
 # Map of color names to RGB values
 COLORS = {
@@ -318,9 +318,37 @@ class Key(WorldObj):
         fill_coords(img, point_in_circle(cx=0.56, cy=0.28, r=0.064), (0, 0, 0))
 
 
+class Button(WorldObj):
+    signal = Signal()
+
+    def can_overlap(self):
+        return True
+
+    def see_behind(self):
+        return True
+
+    def unhover(self, agent):
+        self.signal.emit(0)
+
+    def hover(self, agent):
+        self.signal.emit(1)
+
+    def can_pickup(self):
+        return False
+
+    def str_render(self, dir=0):
+        return "BB"
+
+    def render(self, img):
+        c = COLORS[self.color]
+        fill_coords(img, point_in_rect(0.10, 0.90, 0.1, 0.9), c / 2)
+        fill_coords(img, point_in_circle(cx=0.5, cy=0.5, r=0.2), c)
+
+
 class Switch(WorldObj):
     states = IntEnum("switch_state", "on off")
     signal = Signal()
+
     def can_overlap(self):
         return True
 
