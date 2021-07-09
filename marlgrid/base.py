@@ -556,7 +556,7 @@ class MultiGridEnv(gym.Env):
                         if cur_cell == agent:
                             self.grid.set(*cur_pos, None)
                         else:
-                            assert cur_cell.can_overlap()
+                            # assert cur_cell.can_overlap()
                             cur_cell.agents.remove(agent)
 
                         # Add agent's agents to old cell
@@ -566,12 +566,20 @@ class MultiGridEnv(gym.Env):
                                 self.grid.set(*cur_pos, left_behind)
                             elif cur_obj.can_overlap():
                                 cur_obj.agents.append(left_behind)
-                            else:  # How was "agent" there in teh first place?
+                            else:  # How was "agent" there in the first place?
                                 raise ValueError("?!?!?!")
 
                         # After moving, the agent shouldn't contain any other agents.
                         agent.agents = []
                         # test_integrity(f"After moving {agent.color} fellow")
+
+                        # Hover Behavior for objects
+                        if hasattr(fwd_cell, 'hover'):
+                            rwd = fwd_cell.hover(agent)
+
+                        # Hover Behavior for objects
+                        if hasattr(cur_cell, 'unhover'):
+                            rwd = cur_cell.unhover(agent)
 
                         # Rewards can be got iff. fwd_cell has a "get_reward" method
                         if hasattr(fwd_cell, 'get_reward'):
@@ -615,14 +623,14 @@ class MultiGridEnv(gym.Env):
                 # Press an object
                 elif action == agent.actions.press:
                     if fwd_cell:
-                        wasted = bool(fwd_cell.toggle(agent, fwd_pos))
+                        wasted = bool(fwd_cell.press(agent, fwd_pos))
                     else:
                         pass
 
                 # Release an object
                 elif action == agent.actions.release:
                     if fwd_cell:
-                        wasted = bool(fwd_cell.toggle(agent, fwd_pos))
+                        wasted = bool(fwd_cell.release(agent, fwd_pos))
                     else:
                         pass
 
