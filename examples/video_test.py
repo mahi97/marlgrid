@@ -1,20 +1,22 @@
 from marlgrid.utils.video import GridRecorder
 import gym_minigrid
 
-env = gym_minigrid.envs.empty.EmptyEnv(size=10)
-env.max_steps = 200
 
-env = GridRecorder(env, render_kwargs={"tile_size": 11})
+if __name__ == '__main__':
+    env = gym_minigrid.envs.empty.EmptyEnv(size=10)
+    env.max_steps = 200
 
-obs = env.reset()
-env.recording = True
+    env = GridRecorder(env, render_kwargs={"tile_size": 11}, save_root='./')
 
-count = 0
-done = False
+    obs = env.reset()
+    env.recording = True
 
-while not done:
-    act = env.action_space.sample()
-    obs, rew, done, _ = env.step(act)
-    count += 1
+    count = 0
+    done = False
 
-env.export_video("test_minigrid.mp4")
+    while not done:
+        act = env.action_space.sample()
+        obs, rew, done, _ = env.step(act)
+        count += 1
+
+    env.export_video("test_minigrid.mp4")
