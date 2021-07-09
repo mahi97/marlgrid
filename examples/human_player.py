@@ -35,7 +35,7 @@ class HumanPlayer:
 
 
 env_config = {
-    "env_class": "DoorKeyEnv",
+    "env_class": "PassMultiGrid",
     "grid_size": 31,
     "max_steps": 250,
     # "clutter_density": 0.15,
