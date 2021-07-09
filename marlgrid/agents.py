@@ -6,6 +6,7 @@ import numba
 
 from .objects import GridAgent, BonusTile
 
+
 class GridAgentInterface(GridAgent):
     class actions(IntEnum):
         left = 0  # Rotate left
@@ -54,7 +55,7 @@ class GridAgentInterface(GridAgent):
         if self.prestige_beta > 1:
             # warnings.warn("prestige_beta must be between 0 and 1. Using default 0.99")
             self.prestige_beta = 0.95
-            
+
         image_space = gym.spaces.Box(
             low=0,
             high=255,
@@ -93,47 +94,47 @@ class GridAgentInterface(GridAgent):
         if not self.active:
             return tile
 
-        blue = np.array([0,0,255])
-        red = np.array([255,0,0])
+        blue = np.array([0, 0, 255])
+        red = np.array([255, 0, 0])
 
         if self.color == 'prestige':
             # Compute a scaled prestige value between 0 and 1 that will be used to 
             #   interpolate between the low-prestige (red) and high-prestige (blue)
             #   colors.
             if self.allow_negative_prestige:
-                prestige_scaled = 1/(1 + np.exp(-self.prestige/self.prestige_scale))
+                prestige_scaled = 1 / (1 + np.exp(-self.prestige / self.prestige_scale))
             else:
-                prestige_scaled = np.tanh(self.prestige/self.prestige_scale)
+                prestige_scaled = np.tanh(self.prestige / self.prestige_scale)
 
             new_color = (
                     prestige_scaled * blue +
-                    (1.-prestige_scaled) * red
-                ).astype(np.int)
+                    (1. - prestige_scaled) * red
+            ).astype(np.int)
 
-            grey_pixels = (np.diff(tile, axis=-1)==0).all(axis=-1)
+            grey_pixels = (np.diff(tile, axis=-1) == 0).all(axis=-1)
 
-            alpha = tile[...,0].astype(np.uint16)[...,None]
+            alpha = tile[..., 0].astype(np.uint16)[..., None]
             tile = np.right_shift(alpha * new_color, 8).astype(np.uint8)
             return tile
         else:
             return tile
 
     def clone(self):
-        ret =  self.__class__(
-            view_size = self.view_size,
+        ret = self.__class__(
+            view_size=self.view_size,
             view_offset=self.view_offset,
-            view_tile_size = self.view_tile_size,
-            observation_style = self.observation_style,
-            observe_rewards = self.observe_rewards,
-            observe_position = self.observe_position,
-            observe_orientation = self.observe_orientation,
-            hide_item_types = self.hide_item_types,
-            restrict_actions = self.restrict_actions,
+            view_tile_size=self.view_tile_size,
+            observation_style=self.observation_style,
+            observe_rewards=self.observe_rewards,
+            observe_position=self.observe_position,
+            observe_orientation=self.observe_orientation,
+            hide_item_types=self.hide_item_types,
+            restrict_actions=self.restrict_actions,
             see_through_walls=self.see_through_walls,
-            prestige_beta = self.prestige_beta,
-            prestige_scale = self.prestige_scale,
-            allow_negative_prestige = self.allow_negative_prestige,
-            spawn_delay = self.spawn_delay,
+            prestige_beta=self.prestige_beta,
+            prestige_scale=self.prestige_scale,
+            allow_negative_prestige=self.allow_negative_prestige,
+            spawn_delay=self.spawn_delay,
             **self.init_kwargs
         )
         return ret
@@ -149,7 +150,7 @@ class GridAgentInterface(GridAgent):
         else:
             if rew >= 0:
                 self.prestige += rew
-            else: # rew < 0
+            else:  # rew < 0
                 self.prestige = 0
 
     def activate(self):
@@ -179,7 +180,7 @@ class GridAgentInterface(GridAgent):
         Get the direction vector for the agent, pointing in the direction
         of forward movement.
         """
-        assert self.dir >= 0 and self.dir < 4
+        assert 0 <= self.dir < 4
         return np.array([[1, 0], [0, 1], [-1, 0], [0, -1]])[self.dir]
 
     @property
@@ -208,10 +209,8 @@ class GridAgentInterface(GridAgent):
         dx, dy = self.dir_vec
         rx, ry = self.right_vec
 
-        
-        ax -= 2*self.view_offset*dx
-        ay -= 2*self.view_offset*dy
-
+        ax -= 2 * self.view_offset * dx
+        ay -= 2 * self.view_offset * dy
 
         # Compute the absolute coordinates of the top-left view corner
         sz = self.view_size
@@ -229,10 +228,8 @@ class GridAgentInterface(GridAgent):
 
         return vx, vy
 
-        
     def get_view_pos(self):
-        return (self.view_size // 2, self.view_size - 1 - self.view_offset)
-
+        return self.view_size // 2, self.view_size - 1 - self.view_offset
 
     def get_view_exts(self):
         """
@@ -263,7 +260,7 @@ class GridAgentInterface(GridAgent):
         botX = topX + self.view_size
         botY = topY + self.view_size
 
-        return (topX, topY, botX, botY)
+        return topX, topY, botX, botY
 
     def relative_coords(self, x, y):
         """
@@ -293,7 +290,7 @@ class GridAgentInterface(GridAgent):
             return occlude_mask(~opacity_grid, self.get_view_pos())
         else:
             return np.full(opacity_grid.shape, 1, dtype=np.bool)
-    
+
 
 @numba.njit
 def occlude_mask(grid, agent_pos):
@@ -301,9 +298,9 @@ def occlude_mask(grid, agent_pos):
     mask[agent_pos[0], agent_pos[1]] = True
     width, height = grid.shape[:2]
 
-    for j in range(agent_pos[1]+1,0,-1):
+    for j in range(agent_pos[1] + 1, 0, -1):
         for i in range(agent_pos[0], width):
-            if mask[i,j] and grid[i,j]:
+            if mask[i, j] and grid[i, j]:
                 if i < width - 1:
                     mask[i + 1, j] = True
                 if j > 0:
@@ -311,8 +308,8 @@ def occlude_mask(grid, agent_pos):
                     if i < width - 1:
                         mask[i + 1, j - 1] = True
 
-        for i in range(agent_pos[0]+1,0,-1):
-            if mask[i,j] and grid[i,j]:    
+        for i in range(agent_pos[0] + 1, 0, -1):
+            if mask[i, j] and grid[i, j]:
                 if i > 0:
                     mask[i - 1, j] = True
                 if j > 0:
@@ -320,24 +317,23 @@ def occlude_mask(grid, agent_pos):
                     if i > 0:
                         mask[i - 1, j - 1] = True
 
-
     for j in range(agent_pos[1], height):
         for i in range(agent_pos[0], width):
-            if mask[i,j] and grid[i,j]:
+            if mask[i, j] and grid[i, j]:
                 if i < width - 1:
                     mask[i + 1, j] = True
-                if j < height-1:
+                if j < height - 1:
                     mask[i, j + 1] = True
                     if i < width - 1:
                         mask[i + 1, j + 1] = True
 
-        for i in range(agent_pos[0]+1,0,-1):
-            if mask[i,j] and grid[i,j]:
+        for i in range(agent_pos[0] + 1, 0, -1):
+            if mask[i, j] and grid[i, j]:
                 if i > 0:
                     mask[i - 1, j] = True
-                if j < height-1:
+                if j < height - 1:
                     mask[i, j + 1] = True
                     if i > 0:
                         mask[i - 1, j + 1] = True
-                    
+
     return mask
