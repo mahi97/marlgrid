@@ -383,11 +383,11 @@ class Door(WorldObj):
 
     def switch(self, switch):
         if self.state == self.states.locked:  # is locked
-            pass
-        elif self.state == self.states.closed:  # is unlocked but closed
             self.state = self.states.open
+        elif self.state == self.states.closed:  # is unlocked but closed
+            pass
         elif self.state == self.states.open:  # is open
-            self.state = self.states.closed
+            self.state = self.states.locked
         return True
 
     def toggle(self, agent, pos):
