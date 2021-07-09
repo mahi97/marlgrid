@@ -5,7 +5,11 @@ from gym_minigrid.rendering import (
     point_in_rect,
     point_in_triangle,
     rotate_fn,
+    point_in_circle,
+    point_in_line,
 )
+
+from PySignal import  Signal
 
 # Map of color names to RGB values
 COLORS = {
@@ -20,15 +24,16 @@ COLORS = {
     "grey": np.array([100, 100, 100]),
     "worst": np.array([74, 65, 42]),  # https://en.wikipedia.org/wiki/Pantone_448_C
     "pink": np.array([255, 0, 189]),
-    "white": np.array([255,255,255]),
-    "prestige": np.array([255,255,255]),
-    "shadow": np.array([35,25,30]), # nice dark purpley color for cells agents can't see.
+    "white": np.array([255, 255, 255]),
+    "prestige": np.array([255, 255, 255]),
+    "shadow": np.array([35, 25, 30]),  # nice dark purpley color for cells agents can't see.
 }
 
 # Used to map colors to integers
 COLOR_TO_IDX = dict({v: k for k, v in enumerate(COLORS.keys())})
 
 OBJECT_TYPES = []
+
 
 class RegisteredObjectType(type):
     def __new__(meta, name, bases, class_dict):
@@ -49,8 +54,8 @@ class WorldObj(metaclass=RegisteredObjectType):
         self.state = state
         self.contains = None
 
-        self.agents = [] # Some objects can have agents on top (e.g. floor, open doors, etc).
-        
+        self.agents = []  # Some objects can have agents on top (e.g. floor, open doors, etc).
+
         self.pos_init = None
         self.pos = None
         self.is_agent = False
@@ -67,7 +72,7 @@ class WorldObj(metaclass=RegisteredObjectType):
     @property
     def numeric_color(self):
         return COLORS[self.color]
-    
+
     @property
     def type(self):
         return self.__class__.__name__
@@ -123,7 +128,7 @@ class WorldObj(metaclass=RegisteredObjectType):
 
 class GridAgent(WorldObj):
     def __init__(self, *args, color='red', **kwargs):
-        super().__init__(*args, **{'color':color, **kwargs})
+        super().__init__(*args, **{'color': color, **kwargs})
         self.metadata = {
             'color': color,
         }
@@ -148,7 +153,7 @@ class GridAgent(WorldObj):
         return True
 
     def render(self, img):
-        tri_fn = point_in_triangle((0.12, 0.19), (0.87, 0.50), (0.12, 0.81),)
+        tri_fn = point_in_triangle((0.12, 0.19), (0.87, 0.50), (0.12, 0.81), )
         tri_fn = rotate_fn(tri_fn, cx=0.5, cy=0.5, theta=0.5 * np.pi * (self.dir))
         fill_coords(img, tri_fn, COLORS[self.color])
 
@@ -161,8 +166,10 @@ class BulkObj(WorldObj, metaclass=RegisteredObjectType):
     def __eq__(self, other):
         return hash(self) == hash(other)
 
+
 class BonusTile(WorldObj):
-    def __init__(self, reward, penalty=-0.1, bonus_id=0, n_bonus=1, initial_reward=True, reset_on_mistake=False, color='yellow', *args, **kwargs):
+    def __init__(self, reward, penalty=-0.1, bonus_id=0, n_bonus=1, initial_reward=True, reset_on_mistake=False,
+                 color='yellow', *args, **kwargs):
         super().__init__(*args, **{'color': color, **kwargs, 'state': bonus_id})
         self.reward = reward
         self.penalty = penalty
@@ -188,7 +195,7 @@ class BonusTile(WorldObj):
         if agent.bonus_state == self.bonus_id:
             # This is the last bonus tile the agent hit
             rew = -np.abs(self.penalty)
-        elif (agent.bonus_state + 1)%self.n_bonus == self.bonus_id:
+        elif (agent.bonus_state + 1) % self.n_bonus == self.bonus_id:
             # The agent hit the previous bonus tile before this one
             agent.bonus_state = self.bonus_id
             # rew = agent.bonus_value
@@ -207,6 +214,7 @@ class BonusTile(WorldObj):
 
     def render(self, img):
         fill_coords(img, point_in_rect(0, 1, 0, 1), COLORS[self.color])
+
 
 class Goal(WorldObj):
     def __init__(self, reward, *args, **kwargs):
@@ -228,7 +236,7 @@ class Goal(WorldObj):
 
 class Floor(WorldObj):
     def can_overlap(self):
-        return True# and self.agent is None
+        return True  # and self.agent is None
 
     def str_render(self, dir=0):
         return "FF"
@@ -256,7 +264,7 @@ class EmptySpace(WorldObj):
 
 class Lava(WorldObj):
     def can_overlap(self):
-        return True# and self.agent is None
+        return True  # and self.agent is None
 
     def str_render(self, dir=0):
         return "VV"
@@ -310,6 +318,49 @@ class Key(WorldObj):
         fill_coords(img, point_in_circle(cx=0.56, cy=0.28, r=0.064), (0, 0, 0))
 
 
+class Switch(WorldObj):
+    states = IntEnum("switch_state", "on off")
+    signal = Signal()
+    def can_overlap(self):
+        return True
+
+    def see_behind(self):
+        return True
+
+    def toggle(self, agent, pos):
+        if self.state == self.states.on:  # is unlocked but closed
+            self.state = self.states.off
+        else:  # is open
+            self.state = self.states.on
+        self.signal.emit(self.state)
+        return True
+
+    def can_pickup(self):
+        return False
+
+    def str_render(self, dir=0):
+        return "SS"
+
+    def render(self, img):
+        c = COLORS[self.color]
+
+        # Vertical quad
+        # fill_coords(img, point_in_rect(0.50, 0.63, 0.31, 0.88), c)
+        #
+        # # Teeth
+        # fill_coords(img, point_in_rect(0.38, 0.50, 0.59, 0.66), c)
+        # fill_coords(img, point_in_rect(0.38, 0.50, 0.81, 0.88), c)
+        if self.state == self.states.on:
+            # Ring
+            fill_coords(img, point_in_circle(cx=0.56, cy=0.28, r=0.30), c)
+            # fill_coords(img, point_in_circle(cx=0.56, cy=0.28, r=0.064), (0, 0, 0))
+
+        else:
+            # Ring
+            fill_coords(img, point_in_circle(cx=0.56, cy=0.28, r=0.30), c)
+            fill_coords(img, point_in_circle(cx=0.56, cy=0.28, r=0.15), (0, 0, 0))
+
+
 class Ball(WorldObj):
     def can_pickup(self):
         return True
@@ -325,18 +376,27 @@ class Door(WorldObj):
     states = IntEnum("door_state", "open closed locked")
 
     def can_overlap(self):
-        return self.state == self.states.open# and self.agent is None  # is open
+        return self.state == self.states.open  # and self.agent is None  # is open
 
     def see_behind(self):
         return self.state == self.states.open  # is open
+
+    def switch(self, switch):
+        if self.state == self.states.locked:  # is locked
+            pass
+        elif self.state == self.states.closed:  # is unlocked but closed
+            self.state = self.states.open
+        elif self.state == self.states.open:  # is open
+            self.state = self.states.closed
+        return True
 
     def toggle(self, agent, pos):
         if self.state == self.states.locked:  # is locked
             # If the agent is carrying a key of matching color
             if (
-                agent.carrying is not None
-                and isinstance(agent.carrying, Key)
-                and agent.carrying.color == self.color
+                    agent.carrying is not None
+                    and isinstance(agent.carrying, Key)
+                    and agent.carrying.color == self.color
             ):
                 self.state = self.states.closed
         elif self.state == self.states.closed:  # is unlocked but closed
