@@ -1,6 +1,7 @@
 from ..base import MultiGridEnv
 
 from .empty import EmptyMultiGrid
+from .passdoor import PassMultiGrid
 from .doorkey import DoorKeyEnv
 from .cluttered import ClutteredMultiGrid
 from .goalcycle import ClutteredGoalCycleEnv
@@ -118,4 +119,8 @@ register_marl_env(
         'clutter_density':0.1,
         'n_bonus_tiles': 3
     }
+)
+
+register_marl_env(
+    "MarlGrid-2AgentPass30x30-v0", PassMultiGrid, n_agents=2, grid_size=30, view_size=30
 )
