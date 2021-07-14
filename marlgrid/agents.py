@@ -16,8 +16,8 @@ class GridAgentInterface(GridAgent):
         drop = 4  # Drop an object
         toggle = 5  # Toggle/activate an object
         done = 6  # Done completing task
-        press = 7  # Press a Button
-        release = 8  # Release a Button
+        # press = 7  # Press a Button
+        # release = 8  # Release a Button
 
     def __init__(
             self,

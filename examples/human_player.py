@@ -57,7 +57,13 @@ player_interface_config = {
 }
 
 # Add the player/agent config to the environment config (as expected by "env_from_config" below)
-env_config['agents'] = [player_interface_config, player_interface_config]
+player_red = player_interface_config.copy()
+player_red['color'] = 'red'
+
+player_yellow = player_interface_config.copy()
+player_yellow['color'] = 'yellow'
+
+env_config['agents'] = [player_red, player_yellow]
 
 if __name__ == '__main__':
 
