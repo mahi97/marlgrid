@@ -10,6 +10,7 @@ from gym_minigrid.rendering import (
 )
 
 from PySignal import Signal
+from blinker import signal
 
 # Map of color names to RGB values
 COLORS = {
@@ -77,7 +78,7 @@ class WorldObj(metaclass=RegisteredObjectType):
     def type(self):
         return self.__class__.__name__
 
-    def can_overlap(self):
+    def can_overlap(self, agent=None):
         return False
 
     def can_pickup(self):
@@ -319,19 +320,21 @@ class Key(WorldObj):
 
 
 class Button(WorldObj):
-    signal = Signal()
+    def __init__(self, color, state=0):
+        super().__init__(color, state)
+        self.signal = signal('btn-signal-' + color)
 
-    def can_overlap(self):
-        return True
+    def can_overlap(self, agent):
+        return agent.color == self.color if agent else True
 
     def see_behind(self):
         return True
 
     def unhover(self, agent):
-        self.signal.emit(0)
+        self.signal.send(0)
 
     def hover(self, agent):
-        self.signal.emit(1)
+        self.signal.send(1)
 
     def can_pickup(self):
         return False
@@ -346,11 +349,10 @@ class Button(WorldObj):
 
 
 class Switch(WorldObj):
-    states = IntEnum("switch_state", "on off")
-    signal = Signal()
-
-    def can_overlap(self):
-        return True
+    def __init__(self, color, state=0):
+        super().__init__(color, state)
+        self.states = IntEnum("switch_state", "on off")
+        self.signal = signal('switch-signal-' + color)
 
     def see_behind(self):
         return True
@@ -360,7 +362,7 @@ class Switch(WorldObj):
             self.state = self.states.off
         else:  # is open
             self.state = self.states.on
-        self.signal.emit(self.state)
+        self.signal.send(self.state)
         return True
 
     def can_pickup(self):
@@ -403,8 +405,8 @@ class Ball(WorldObj):
 class Door(WorldObj):
     states = IntEnum("door_state", "open closed locked")
 
-    def can_overlap(self):
-        return self.state == self.states.open  # and self.agent is None  # is open
+    def can_overlap(self, agent):
+        return self.state == self.states.open and agent.color == self.color # and self.agent is None  # is open
 
     def see_behind(self):
         return self.state == self.states.open  # is open

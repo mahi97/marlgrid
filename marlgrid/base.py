@@ -538,7 +538,7 @@ class MultiGridEnv(gym.Env):
                 # Move forward
                 elif action == agent.actions.forward:
                     # Under the follow conditions, the agent can move forward.
-                    can_move = fwd_cell is None or fwd_cell.can_overlap()
+                    can_move = fwd_cell is None or fwd_cell.can_overlap(agent)
                     if self.ghost_mode is False and isinstance(fwd_cell, GridAgent):
                         can_move = False
 
@@ -564,7 +564,7 @@ class MultiGridEnv(gym.Env):
                             cur_obj = self.grid.get(*cur_pos)
                             if cur_obj is None:
                                 self.grid.set(*cur_pos, left_behind)
-                            elif cur_obj.can_overlap():
+                            elif cur_obj.can_overlap(agent):
                                 cur_obj.agents.append(left_behind)
                             else:  # How was "agent" there in the first place?
                                 raise ValueError("?!?!?!")
@@ -620,19 +620,19 @@ class MultiGridEnv(gym.Env):
                     else:
                         pass
 
-                # Press an object
-                elif action == agent.actions.press:
-                    if fwd_cell:
-                        wasted = bool(fwd_cell.press(agent, fwd_pos))
-                    else:
-                        pass
-
-                # Release an object
-                elif action == agent.actions.release:
-                    if fwd_cell:
-                        wasted = bool(fwd_cell.release(agent, fwd_pos))
-                    else:
-                        pass
+                # # Press an object
+                # elif action == agent.actions.press:
+                #     if fwd_cell:
+                #         wasted = bool(fwd_cell.press(agent, fwd_pos))
+                #     else:
+                #         pass
+                #
+                # # Release an object
+                # elif action == agent.actions.release:
+                #     if fwd_cell:
+                #         wasted = bool(fwd_cell.release(agent, fwd_pos))
+                #     else:
+                #         pass
 
                 # Done action (not used by default)
                 elif action == agent.actions.done:
@@ -666,12 +666,19 @@ class MultiGridEnv(gym.Env):
                 else:  # if the agent shouldn't be respawned, then deactivate it.
                     agent.deactivate()
 
-        # The episode overall is done if all the agents are done, or if it exceeds the step limit.
-        done = (self.step_count >= self.max_steps) or all([agent.done for agent in self.agents])
+
 
         obs = [self.gen_agent_obs(agent) for agent in self.agents]
 
-        return obs, step_rewards, done, {}
+        return obs, self.reward() + step_rewards, self.done(), {}
+
+    def done(self):
+        # The episode overall is done if all the agents are done, or if it exceeds the step limit.
+        done = (self.step_count >= self.max_steps) or all([agent.done for agent in self.agents])
+        return done
+
+    def reward(self):
+        return 0
 
     def put_obj(self, obj, i, j):
         """
@@ -696,7 +703,7 @@ class MultiGridEnv(gym.Env):
             return True
 
         # Otherwise only agents can be placed, and only if the target position can_overlap.
-        if not (grid_obj.can_overlap() and obj.is_agent):
+        if not (grid_obj.can_overlap(None) and obj.is_agent):
             return False
 
         # If ghost mode is off and there's already an agent at the target cell, the agent can't
