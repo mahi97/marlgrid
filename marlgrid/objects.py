@@ -150,7 +150,7 @@ class GridAgent(WorldObj):
     def str_render(self, dir=0):
         return [">>", "VV", "<<", "^^"][(self.dir + dir) % 4]
 
-    def can_overlap(self):
+    def can_overlap(self, agent):
         return True
 
     def render(self, img):
