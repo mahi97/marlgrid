@@ -37,7 +37,7 @@ class HumanPlayer:
 env_config = {
     "env_class": "PassMultiGrid",
     "grid_size": 31,
-    "max_steps": 250,
+    "max_steps": 100,
     # "clutter_density": 0.15,
     # "respawn": True,
     # "ghost_mode": True,
@@ -53,6 +53,8 @@ player_interface_config = {
     "view_tile_size": 11,
     "observation_style": "rich",
     "see_through_walls": False,
+    "observe_position": True,
+    "observe_orientation": True,
     "color": "prestige"
 }
 
@@ -92,7 +94,7 @@ if __name__ == '__main__':
         human.save_step(
             obs_list[0], player_action, rew_list[0], done
         )
-
+        print(next_obs_list[0]['position'])
         obs_list = next_obs_list
 
     human.end_episode()
