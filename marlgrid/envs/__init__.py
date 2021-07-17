@@ -27,6 +27,9 @@ def register_marl_env(
     view_tile_size=8,
     view_offset=0,
     agent_color=None,
+    observe_position=False,
+    observe_orientation=False,
+    observation_style='image',
     env_kwargs={},
 ):
     colors = ["red", "blue", "purple", "orange", "olive", "pink"]
@@ -40,8 +43,11 @@ def register_marl_env(
                     GridAgentInterface(
                         color=c if agent_color is None else agent_color,
                         view_size=view_size,
-                        view_tile_size=8,
+                        view_tile_size=view_tile_size,
                         view_offset=view_offset,
+                        observe_position=observe_position,
+                        observe_orientation=observe_orientation,
+                        observation_style=observation_style,
                         )
                     for c in colors[:n_agents]
                 ],
