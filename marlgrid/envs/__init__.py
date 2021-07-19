@@ -32,7 +32,7 @@ def register_marl_env(
     observation_style='image',
     env_kwargs={},
 ):
-    colors = ["red", "blue", "purple", "orange", "olive", "pink"]
+    colors = ["red", "yellow", "blue", "purple", "orange", "olive", "pink"]
     assert n_agents <= len(colors)
 
     class RegEnv(env_class):
